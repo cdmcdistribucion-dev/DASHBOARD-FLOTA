@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard de Flota · Operadores logísticos</title>
+<style>
+:root{
+  --navy:#0B2A5B; --navy2:#123A7A; --gold:#F2A900; --gold2:#FFC72C;
+  --bg:#F3F5F9; --card:#FFFFFF; --ink:#14213D; --mut:#5B6B8A; --line:#DCE2EE;
+  --ok:#1E8E5A; --okbg:#E3F4EB; --warn:#C98200; --warnbg:#FFF1CC; --bad:#C62F3E; --badbg:#FBE4E7; --na:#8A96AD; --nabg:#EDF0F6;
+  --shadow:0 1px 2px rgba(11,42,91,.08),0 4px 14px rgba(11,42,91,.06);
+}
+:root[data-theme="dark"]{
+  --bg:#0A1426; --card:#12203A; --ink:#E8EEF9; --mut:#9AABC9; --line:#24365A;
+  --ok:#3FC184; --okbg:#133A2D; --warn:#F2B53A; --warnbg:#3F3213; --bad:#F06A78; --badbg:#431C25; --na:#7E8DAA; --nabg:#1A2A48;
+  --navy:#0A1F45; --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+header{background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;border-bottom:4px solid var(--gold)}
+.wrap{max-width:1280px;margin:0 auto;padding:0 16px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0;flex-wrap:wrap}
+h1{margin:0;font-size:20px;letter-spacing:.2px}
+h1 small{display:block;font-weight:400;font-size:12px;color:#C5D2EA;margin-top:2px}
+.btn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit}
+.btn:hover{background:rgba(255,255,255,.22)}
+.btn.dark{background:var(--card);color:var(--ink);border-color:var(--line)}
+.controls{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;box-shadow:var(--shadow)}
+@media (max-width:760px){.controls{position:static}}
+.controls .wrap{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding-top:10px;padding-bottom:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink);padding:7px 14px;cursor:pointer;font:inherit}
+.seg button.on{background:var(--navy);color:#fff}
+select,input[type=search]{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 10px;font:inherit;min-width:0}
+label.chk{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.sp{flex:1}
+main.wrap{padding-top:16px;padding-bottom:40px}
+.ops{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-bottom:16px}
+.opc{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;box-shadow:var(--shadow)}
+.opc{cursor:pointer;transition:.15s;position:relative}.opc:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(11,42,91,.16)}
+.opc.sel{outline:3px solid var(--gold);border-top-color:var(--navy)}
+.opc.off{opacity:.55;border-top-color:var(--na)}
+.pill{cursor:pointer;border:1px solid transparent}.pill:hover{filter:brightness(.95);border-color:currentColor}.pill.act{outline:2px solid currentColor}
+.lg{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:4px 11px;font:inherit;font-size:12px;cursor:pointer}
+.lg:hover{border-color:var(--navy)}.lg.act{background:var(--navy);color:#fff;border-color:var(--navy)}.lg b{font-weight:700}
+.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px;font-size:13px}
+.chips .fx{background:var(--warnbg);color:var(--warn);border-radius:99px;padding:3px 10px;font-weight:600}
+.chips button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:3px 10px;cursor:pointer;font:inherit}
+.cell.dim{opacity:.28}.opcol.dimc{opacity:.28}
+.gauge{width:76px;height:76px;flex:none}
+.opc h3{margin:0;font-size:14px}
+.opc .sub{color:var(--mut);font-size:12px}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pill{font-size:11px;padding:2px 7px;border-radius:99px;font-weight:600}
+.p-ok{background:var(--okbg);color:var(--ok)}.p-warn{background:var(--warnbg);color:var(--warn)}.p-bad{background:var(--badbg);color:var(--bad)}.p-na{background:var(--nabg);color:var(--na)}
+.p-star{background:var(--warnbg);color:var(--warn)}
+details.cat{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;box-shadow:var(--shadow);overflow:hidden}
+details.cat>summary{list-style:none;cursor:pointer;padding:12px 16px;font-weight:700;color:#fff;background:var(--navy);display:flex;align-items:center;gap:10px;border-left:6px solid var(--gold)}
+details.cat>summary::-webkit-details-marker{display:none}
+details.cat>summary::after{content:"▾";margin-left:auto;transition:.2s}
+details.cat:not([open])>summary::after{transform:rotate(-90deg)}
+.kpi{padding:8px 16px 4px;font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;background:var(--nabg);border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:minmax(200px,1.3fr) repeat(var(--n),minmax(0,1fr));gap:8px;padding:10px 16px;border-top:1px solid var(--line);align-items:start}
+.row.head{font-size:11px;color:var(--mut);font-weight:700;text-transform:uppercase;border-top:0;padding-top:8px;padding-bottom:6px}
+.name{font-weight:600}
+.name small{display:block;color:var(--mut);font-weight:400;font-size:11px}
+.cell{border-radius:8px;padding:6px 8px;min-height:44px;background:var(--nabg);border-left:4px solid var(--na)}
+.cell.ok{background:var(--okbg);border-color:var(--ok)}.cell.warn{background:var(--warnbg);border-color:var(--warn)}.cell.bad{background:var(--badbg);border-color:var(--bad)}
+.cell.none{background:transparent;border:1px dashed var(--line);color:var(--mut)}
+.cell .l{display:none;font-size:10px;color:var(--mut);font-weight:700}
+.cell .v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.cell .t{font-size:12px;color:var(--ink);margin-top:3px;padding-top:3px;border-top:1px dashed var(--line)}.cell .t b{font-weight:700}.cell .t.sin{color:var(--mut)}
+.cell .s{font-size:11px;font-weight:700;margin-top:2px}.cell.ok .s{color:var(--ok)}.cell.warn .s{color:var(--warn)}.cell.bad .s{color:var(--bad)}
+.cell .e{font-size:10px;color:var(--mut)}
+.cell+.cell{margin-top:4px}
+.opcol{min-width:0}
+.star{cursor:pointer;border:0;background:none;font-size:15px;color:var(--na);padding:0 2px;vertical-align:middle}
+.star.on{color:var(--gold)}
+.weeks{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.wk{font-size:11px;padding:2px 6px;border-radius:6px;background:var(--nabg);border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.wk.ok{background:var(--okbg);color:var(--ok);border-color:var(--ok)}.wk.warn{background:var(--warnbg);color:var(--warn);border-color:var(--warn)}.wk.bad{background:var(--badbg);color:var(--bad);border-color:var(--bad)}
+.empty{padding:30px;text-align:center;color:var(--mut)}
+footer{color:var(--mut);font-size:12px;padding:0 16px 30px;text-align:center}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin:0 0 12px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+@media (max-width:760px){
+  .row{grid-template-columns:1fr 1fr}
+  .row.head{display:none}
+  .row .name{grid-column:1/-1}
+  .cell .l{display:block}
+  .cell.none .l{display:block}
+}
+@media print{.controls,.btn{display:none}header{color:#000;background:#fff}details.cat{break-inside:avoid}}
+
+</style>
+</head>
+<body>
+<header><div class="wrap top">
+  <h1>Dashboard de Flota<small id="sub"></small></h1>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn" id="csv">Exportar CSV</button>
+    <button class="btn" id="prn">Imprimir</button>
+    <button class="btn" id="thm">Tema</button>
+  </div>
+</div></header>
+
+<div class="controls"><div class="wrap">
+  <div class="seg" id="vista"><button data-v="m" class="on">Mensual</button><button data-v="s">Semanal</button></div>
+  <select id="mes" aria-label="Mes"></select>
+  <select id="cat" aria-label="Categoría"></select>
+  <select id="ope" aria-label="Operador"></select>
+  <input type="search" id="q" placeholder="Buscar indicador…">
+  <label class="chk"><input type="checkbox" id="crit"> Solo críticos ⭐</label>
+  <label class="chk"><input type="checkbox" id="dat"> Solo con datos</label>
+</div></div>
+<main class="wrap">
+  <section class="ops" id="ops"></section>
+  <div class="legend" id="leg"></div>
+  <div class="chips" id="chips"></div>
+  <div id="cats"></div>
+</main>
+<footer id="foot"></footer>
+
+<script id="datos">const DATA=null;const MODO="visor";</script>
+<script>
+(function(){
+"use strict";
+let D=DATA||{operadores:[],indicadores:[],categorias:[],meses:[],generado:"",ultimoMes:""}, OPS=D.operadores;
+const MES_ES={ENERO:"Enero",FEBRERO:"Febrero",MARZO:"Marzo",ABRIL:"Abril",MAYO:"Mayo",JUNIO:"Junio",JULIO:"Julio",AGOSTO:"Agosto",SEPTIEMBRE:"Septiembre",OCTUBRE:"Octubre",NOVIEMBRE:"Noviembre",DICIEMBRE:"Diciembre"};
+const $=s=>document.querySelector(s);
+const S={v:"m",mes:D.ultimoMes,cat:"",ope:"",q:"",crit:false,dat:false,est:""};
+let crit={}; // sobrescrituras locales del usuario: "id|OP" -> true/false
+try{crit=JSON.parse(localStorage.getItem("flota.crit")||"{}")}catch(e){}
+function save(){try{localStorage.setItem("flota.crit",JSON.stringify(crit))}catch(e){}}
+function esCrit(ind,op){const k=ind.id+"|"+op;if(k in crit)return crit[k];return ind.filas.some(f=>f.op===op&&f.critico)}
+
+/* ---------- formato ---------- */
+const nf=(v,d)=>v.toLocaleString("es-AR",{minimumFractionDigits:d,maximumFractionDigits:d});
+function fmt(v,t){
+  if(v==null||typeof v!=="number")return "—";
+  switch(t){
+    case"pct":return nf(v*100,1)+" %";
+    case"money":return "$ "+nf(v,0);
+    case"time":{const h=Math.floor(v/3600),m=Math.floor(v%3600/60),s=Math.round(v%60);return h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
+    case"kmpl":return nf(v,2)+" km/l";
+    case"mass":return nf(v,0)+" kg";
+    case"vol":return nf(v,0)+" L";
+    default:return Number.isInteger(v)?nf(v,0):nf(v,2);
+  }
+}
+/* ---------- semáforo (ÚNICO lugar) ---------- */
+function estado(v,t,d,sentido){
+  if(typeof v!=="number"||typeof t!=="number")return"na";
+  const up=sentido!=="↓", tol=Math.abs(t)*.1;
+  if(up){ if(v>=t)return"ok"; if(d!=null)return v>=d?"warn":"bad"; return v>=t-tol?"warn":"bad"; }
+  if(v<=t)return"ok"; if(d!=null)return v<=d?"warn":"bad"; return v<=t+tol?"warn":"bad";
+}
+const ETQ={ok:"En objetivo",warn:"Cerca del objetivo",bad:"Fuera de objetivo",na:"Sin dato u objetivo"};
+
+/* ---------- datos de un indicador/operador ---------- */
+function celdas(ind,op){return ind.filas.filter(f=>f.op===op)}
+function tieneDatos(ind,mes){return ind.filas.some(f=>{const e=f.meses[mes];return e&&(typeof e.m==="number"||e.s.some(x=>typeof x==="number"))})}
+function stDe(ind,o){return celdas(ind,o.cod).map(f=>{const e=f.meses[S.mes];return e?estado(e.m,e.t,e.d,ind.sentido):"na"})}
+function pasaEst(ind){if(!S.est)return true;return opsVis().some(o=>stDe(ind,o).includes(S.est))}
+function pasa(ind,sinEst){
+  if(S.cat&&ind.categoria!==S.cat)return false;
+  if(S.q&&!(ind.nombre+" "+ind.kpi).toLowerCase().includes(S.q.toLowerCase()))return false;
+  if(S.crit&&!OPS.some(o=>(!S.ope||o.cod===S.ope)&&esCrit(ind,o.cod)))return false;
+  if(S.dat&&!tieneDatos(ind,S.mes))return false;
+  return sinEst?true:pasaEst(ind);
+}
+const opsVis=()=>OPS.filter(o=>!S.ope||o.cod===S.ope);
+
+/* ---------- render ---------- */
+function celdaMes(ind,f,op){
+  const e=f.meses[S.mes]||{s:[]}, st=estado(e.m,e.t,e.d,ind.sentido);
+  const tip=[f.origen?"Fila: "+f.origen:"",e.ms?"Celda: "+e.ms:(e.mc?"Promedio/suma calculado de las semanas":""),e.ts?"Objetivo: "+({c:"catálogo",m:"META mensual",a:"TARGET anual"}[e.ts]):"",ETQ[st]].filter(Boolean).join(" · ");
+  const lab=ind.filas.length>1&&celdas(ind,op).length>1?f.etiqueta:"";
+  return `<div class="cell ${st==="na"&&e.m==null?"none":st}" title="${esc(tip)}"><div class="l">${op}</div>
+   <div class="v">${fmt(e.m,ind.tipo)}${e.mc?'<span class="e" title="Calculado desde semanas"> ƒ</span>':""}</div>
+   <div class="t ${e.t!=null?"":"sin"}">${e.t!=null?"🎯 Objetivo: <b>"+fmt(e.t,ind.tipo)+"</b>":"Sin objetivo definido"}</div>${st!=="na"?`<div class="s">${{ok:"✔ En objetivo",warn:"● Cerca del objetivo",bad:"✖ Fuera de objetivo"}[st]}</div>`:""}${lab?`<div class="e">${esc(lab)}</div>`:""}</div>`;
+}
+function celdaSem(ind,f,op){
+  const e=f.meses[S.mes]||{s:[],ss:[]}, fe=(OPS.find(o=>o.cod===op).semanas||{})[S.mes]||[];
+  const chips=e.s.map((x,i)=>{const st=estado(x,e.t,e.d,ind.sentido);
+    return `<span class="wk ${st}" title="${esc("S"+(i+1)+(fe[i]?" · "+fe[i]:"")+(e.ss&&e.ss[i]?" · "+e.ss[i]:"")+" · "+ETQ[st])}">S${i+1} ${fmt(x,ind.tipo)}</span>`}).join("");
+  const lab=celdas(ind,op).length>1?f.etiqueta:"";
+  return `<div class="cell ${e.s.some(x=>typeof x==="number")?"":"none"}"><div class="l">${op}</div>
+   <div class="weeks">${chips||'<span class="e">Sin semanas</span>'}</div>
+   <div class="t ${e.t!=null?"":"sin"}">${e.t!=null?"🎯 Objetivo: <b>"+fmt(e.t,ind.tipo)+"</b>":"Sin objetivo definido"}</div>${lab?`<div class="e">${esc(lab)}</div>`:""}</div>`;
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function resumen(){
+  const out=OPS.map(o=>{const c={ok:0,warn:0,bad:0,na:0,cr:0,crbad:0};
+    D.indicadores.filter(i=>pasa(i,true)).forEach(ind=>celdas(ind,o.cod).forEach(f=>{
+      const e=f.meses[S.mes];const st=e?estado(e.m,e.t,e.d,ind.sentido):"na";c[st]++;
+      if(esCrit(ind,o.cod)){c.cr++;if(st==="bad")c.crbad++}}));
+    return {o,c}});
+  $("#ops").innerHTML=out.map(({o,c})=>{
+    const ev=c.ok+c.warn+c.bad, pct=ev?c.ok/ev:0, R=32, L=2*Math.PI*R;
+    const col=!ev?"var(--na)":pct>=.8?"var(--ok)":pct>=.5?"var(--warn)":"var(--bad)";
+    return `<div class="opc ${S.ope===o.cod?"sel":(S.ope?"off":"")}" data-op="${o.cod}" title="Clic para ver solo ${esc(o.nombre)}">
+     <svg class="gauge" viewBox="0 0 80 80" role="img" aria-label="${Math.round(pct*100)}% en objetivo"><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--line)" stroke-width="8"/>
+      <circle cx="40" cy="40" r="${R}" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${L*pct} ${L}" transform="rotate(-90 40 40)"/>
+      <text x="40" y="45" text-anchor="middle" font-size="16" font-weight="700" fill="var(--ink)">${ev?Math.round(pct*100)+"%":"—"}</text></svg>
+     <div><h3>${esc(o.nombre)} <span class="sub">(${o.cod})</span></h3>
+      <div class="sub">${o.ok?esc(o.archivo):"Sin archivo fuente"}</div>
+      <div class="pills"><span class="pill p-ok ${S.ope===o.cod&&S.est==="ok"?"act":""}" data-op="${o.cod}" data-est="ok">${c.ok} ok</span><span class="pill p-warn ${S.ope===o.cod&&S.est==="warn"?"act":""}" data-op="${o.cod}" data-est="warn">${c.warn} alerta</span><span class="pill p-bad ${S.ope===o.cod&&S.est==="bad"?"act":""}" data-op="${o.cod}" data-est="bad">${c.bad} fuera</span><span class="pill p-na ${S.ope===o.cod&&S.est==="na"?"act":""}" data-op="${o.cod}" data-est="na">${c.na} s/d</span>
+      ${c.cr?`<span class="pill p-star ${S.ope===o.cod&&S.crit?"act":""}" data-op="${o.cod}" data-crit="1">⭐ ${c.cr} · ${c.crbad} fuera</span>`:""}</div></div></div>`}).join("");
+}
+
+function leyenda(){
+  const tot={ok:0,warn:0,bad:0,na:0};
+  D.indicadores.filter(i=>pasa(i,true)).forEach(i=>opsVis().forEach(o=>stDe(i,o).forEach(x=>tot[x]++)));
+  const B=(k,c,t)=>`<button class="lg ${S.est===k?"act":""}" data-est="${k}"><i class="dot" style="background:var(--${c});margin:0"></i>${t} <b>${tot[k]}</b></button>`;
+  $("#leg").innerHTML=B("ok","ok","En objetivo")+B("warn","warn","Cerca / en alerta")+B("bad","bad","Fuera de objetivo")+B("na","na","Sin dato u objetivo")+
+   `<button class="lg ${S.crit?"act":""}" data-crit="1">⭐ Solo críticos</button>`;
+  const o=OPS.find(x=>x.cod===S.ope),ET={ok:"En objetivo",warn:"Cerca / en alerta",bad:"Fuera de objetivo",na:"Sin dato u objetivo"};
+  const f=[o?"Operador: "+o.nombre:"",S.est?ET[S.est]:"",S.crit?"Solo críticos ⭐":"",S.cat||""].filter(Boolean);
+  $("#chips").innerHTML=f.length?`<span>Mostrando:</span>${f.map(x=>`<span class="fx">${esc(x)}</span>`).join("")}<span>· ${D.indicadores.filter(i=>pasa(i)).length} indicadores</span><button data-clear="1">✕ Limpiar filtros</button>`:"";
+}
+function irTabla(){const el=$("#cats");if(el&&el.scrollIntoView)el.scrollIntoView({behavior:"smooth",block:"start"})}
+function render(){
+  const ov=opsVis();
+  document.documentElement.style.setProperty("--n",ov.length);
+  resumen();leyenda();
+  let html="",hay=false;
+  D.categorias.forEach(cat=>{
+    const inds=D.indicadores.filter(i=>i.categoria===cat&&pasa(i));if(!inds.length)return;hay=true;
+    let h=`<details class="cat" open><summary>${esc(cat)} <span class="pill p-na">${inds.length}</span></summary>
+      <div class="row head"><div>Indicador</div>${ov.map(o=>`<div>${o.cod}</div>`).join("")}</div>`;
+    let ult="";
+    inds.forEach(ind=>{
+      if(ind.kpi!==ult){ult=ind.kpi;h+=`<div class="kpi">${esc(ind.kpiCod)} · ${esc(ind.kpi)}</div>`}
+      h+=`<div class="row"><div class="name">${esc(ind.nombre)}<small>${esc(ind.frecuencia)} · ${esc(ind.unidad)} · ${ind.sentido==="↓"?"menor es mejor":"mayor es mejor"}${ind.nota?" · "+esc(ind.nota):""}</small></div>`;
+      ov.forEach(o=>{
+        const fs=celdas(ind,o.cod);const dim=S.est&&!stDe(ind,o).includes(S.est);
+        const star=`<button class="star ${esCrit(ind,o.cod)?"on":""}" data-k="${esc(ind.id)}|${o.cod}" title="Marcar/Desmarcar crítico (se guarda en este navegador)" aria-label="Crítico">★</button>`;
+        h+=`<div class="opcol${dim?" dimc":""}">${fs.length?fs.map(f=>S.v==="m"?celdaMes(ind,f,o.cod):celdaSem(ind,f,o.cod)).join(""):`<div class="cell none"><div class="l">${o.cod}</div><div class="t">No reporta</div></div>`}${fs.length?`<div style="text-align:right">${star}</div>`:""}</div>`;
+      });
+      h+="</div>";
+    });
+    html+=h+"</details>";
+  });
+  $("#cats").innerHTML=hay?html:'<div class="empty">No hay indicadores para los filtros elegidos.</div>';
+}
+
+/* ---------- eventos ---------- */
+function poblar(){
+  $("#sub").textContent=D.generado?"Datos de BASE_FLOTA.xlsx · actualizado "+D.generado:"Cargando datos…";
+  $("#mes").innerHTML=D.meses.map(m=>`<option value="${m}">${MES_ES[m]}</option>`).join("");$("#mes").value=S.mes;
+  $("#cat").innerHTML='<option value="">Todas las categorías</option>'+D.categorias.map(c=>`<option>${esc(c)}</option>`).join("");
+  $("#ope").innerHTML='<option value="">Todos los operadores</option>'+OPS.map(o=>`<option value="${o.cod}">${esc(o.nombre)}</option>`).join("");
+  $("#foot").textContent="Todo sale de BASE_FLOTA.xlsx (hojas Indicadores, Objetivos y Resultados). Objetivo del mes si está cargado; si no, el Target de Objetivos. Semáforo: verde cumple objetivo; ámbar = dentro del disparador del operador (o 10 % de tolerancia); rojo = fuera. Colores aproximados de la paleta AB InBev.";
+}
+function init(){
+  poblar();
+  $("#vista").onclick=e=>{const b=e.target.closest("button");if(!b)return;S.v=b.dataset.v;[...$("#vista").children].forEach(x=>x.classList.toggle("on",x===b));render()};
+  $("#mes").onchange=e=>{S.mes=e.target.value;render()};
+  $("#cat").onchange=e=>{S.cat=e.target.value;render()};
+  $("#ope").onchange=e=>{S.ope=e.target.value;render()};
+  $("#q").oninput=e=>{S.q=e.target.value;render()};
+  $("#crit").onchange=e=>{S.crit=e.target.checked;render()};
+  $("#dat").onchange=e=>{S.dat=e.target.checked;render()};
+  $("#cats").onclick=e=>{const b=e.target.closest(".star");if(!b)return;const [id,op]=b.dataset.k.split("|");
+    const ind=D.indicadores.find(i=>i.id===id);crit[b.dataset.k]=!esCrit(ind,op);save();render()};
+  const sync=()=>{$("#ope").value=S.ope;$("#crit").checked=S.crit};
+  $("#ops").onclick=e=>{const p=e.target.closest(".pill"),c=e.target.closest(".opc");if(!c)return;const op=c.dataset.op;
+    if(p&&p.dataset.est){const igual=S.ope===op&&S.est===p.dataset.est;S.ope=igual?"":op;S.est=igual?"":p.dataset.est;S.crit=false}
+    else if(p&&p.dataset.crit){const igual=S.ope===op&&S.crit;S.ope=igual?"":op;S.crit=!igual;S.est=""}
+    else{S.ope=S.ope===op?"":op;S.est="";S.crit=false}
+    sync();render();if(S.ope)irTabla()};
+  $("#leg").onclick=e=>{const b=e.target.closest(".lg");if(!b)return;
+    if(b.dataset.crit)S.crit=!S.crit;else S.est=S.est===b.dataset.est?"":b.dataset.est;sync();render();if(S.est||S.crit)irTabla()};
+  $("#chips").onclick=e=>{if(e.target.closest("[data-clear]")){S.ope=S.est=S.cat=S.q="";S.crit=S.dat=false;$("#cat").value="";$("#q").value="";$("#dat").checked=false;sync();render()}};
+  $("#prn").onclick=()=>window.print();
+  $("#thm").onclick=()=>{const r=document.documentElement,d=r.dataset.theme==="dark"?"light":"dark";r.dataset.theme=d;try{localStorage.setItem("flota.tema",d)}catch(e){}};
+  try{const t=localStorage.getItem("flota.tema");if(t)document.documentElement.dataset.theme=t}catch(e){}
+  $("#csv").onclick=()=>{
+    const rows=[["Categoría","KPI","Indicador","Operador","Fila Excel","Unidad","Sentido","Mes","Valor mensual","Objetivo","Estado","Crítico","Semanas"]];
+    D.indicadores.filter(i=>pasa(i)).forEach(ind=>opsVis().forEach(o=>celdas(ind,o.cod).forEach(f=>{
+      const e=f.meses[S.mes]||{s:[]};
+      rows.push([ind.categoria,ind.kpi,ind.nombre,o.cod,f.origen,ind.unidad,ind.sentido,S.mes,e.m??"",e.t??"",ETQ[estado(e.m,e.t,e.d,ind.sentido)],esCrit(ind,o.cod)?"SI":"",e.s.map(x=>x??"").join(" | ")]);})));
+    const csv="﻿"+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(";")).join("\n");
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="flota_"+S.mes.toLowerCase()+".csv";a.click();
+  };
+  render();
+}
+init();
+window.FLOTA={datos:()=>D,cargar(d){D=d;OPS=d.operadores;Object.assign(S,{mes:d.ultimoMes,cat:"",ope:"",q:"",crit:false,dat:false,est:""});
+  $("#q").value="";$("#crit").checked=false;$("#dat").checked=false;poblar();render()}};
+// VISOR: lee data.json (mismo directorio) cada vez que se abre; así solo se actualiza ese archivo
+if(!DATA){fetch("data.json?v="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(d=>window.FLOTA.cargar(d))
+  .catch(e=>{$("#sub").textContent="No se pudieron cargar los datos (data.json). Abrí el link publicado, no el archivo local. "+e.message;$("#cats").innerHTML='<div class="empty">Sin datos para mostrar.</div>'})}
+})();
+
+</script>
+</body>
+</html>
