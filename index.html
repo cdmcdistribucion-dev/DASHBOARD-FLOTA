@@ -101,12 +101,18 @@ footer{color:var(--mut);font-size:12px;padding:0 16px 30px;text-align:center}
 .plabel{font-size:12px;color:var(--mut);margin-left:6px}.plabel b{color:var(--ink)}
 .cell.nada{background:transparent;border:0;border-left:0;color:var(--line);text-align:center;font-size:18px;display:flex;align-items:center;justify-content:center;min-height:44px}
 .cell.nada .l{display:none!important}
+/* pestañas de área */
+.tabs{background:var(--card);border-bottom:1px solid var(--line)}
+.tabs:not([hidden]){display:flex;gap:4px;max-width:1280px;margin:0 auto;padding:8px 16px 0}
+.tab{border:0;border-bottom:3px solid transparent;background:none;color:var(--mut);font:inherit;font-weight:700;padding:8px 18px;cursor:pointer;border-radius:8px 8px 0 0}
+.tab:hover{color:var(--ink)}.tab.on{color:var(--navy);border-bottom-color:var(--gold);background:var(--nabg)}
+:root[data-theme=dark] .tab.on{color:#fff}
 
 </style>
 </head>
 <body>
 <header><div class="wrap top">
-  <h1>Dashboard de Flota<small id="sub"></small></h1>
+  <h1><span id="ttl">Dashboard de Flota</span><small id="sub"></small></h1>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
     <button class="btn" id="csv">Exportar CSV</button>
     <button class="btn" id="prn">Imprimir</button>
@@ -114,6 +120,7 @@ footer{color:var(--mut);font-size:12px;padding:0 16px 30px;text-align:center}
   </div>
 </div></header>
 
+<nav class="tabs" id="tabs" hidden></nav>
 <div class="controls"><div class="wrap">
   <div class="seg" id="vista"><button data-v="m" class="on">Mensual</button><button data-v="s">Semanal</button></div>
   <select id="cat" aria-label="Categoría"></select>
@@ -135,7 +142,10 @@ footer{color:var(--mut);font-size:12px;padding:0 16px 30px;text-align:center}
 <script>
 (function(){
 "use strict";
-let D=DATA||{operadores:[],indicadores:[],categorias:[],meses:[],generado:"",ultimoMes:""}, OPS=D.operadores;
+const VACIO={operadores:[],indicadores:[],categorias:[],meses:[],generado:"",ultimoMes:""};
+const NORM=d=>!d?null:(d.flota!==undefined?d:{generado:d.generado,flota:d,warehouse:null});  // acepta data.json viejo (solo flota)
+const NOMBRE_AREA={flota:"Flota",warehouse:"Warehouse"};
+let ALL=NORM(DATA), area="flota", D=(ALL&&ALL[area])||VACIO, OPS=D.operadores;
 const MES_ES={ENERO:"Enero",FEBRERO:"Febrero",MARZO:"Marzo",ABRIL:"Abril",MAYO:"Mayo",JUNIO:"Junio",JULIO:"Julio",AGOSTO:"Agosto",SEPTIEMBRE:"Septiembre",OCTUBRE:"Octubre",NOVIEMBRE:"Noviembre",DICIEMBRE:"Diciembre"};
 const $=s=>document.querySelector(s);
 const S={v:"m",meses:[D.ultimoMes],cat:"",ope:"",q:"",crit:false,dat:false,est:""};
@@ -269,7 +279,7 @@ function render(){
     });
     html+=h+"</details>";
   });
-  $("#cats").innerHTML=hay?html:'<div class="empty">No hay indicadores para los filtros elegidos.</div>';
+  $("#cats").innerHTML=hay?html:(D.indicadores.length?'<div class="empty">No hay indicadores para los filtros elegidos.</div>':`<div class="empty">Todavía no hay indicadores en esta pestaña.<br>Cargalos en <b>BASE_${area.toUpperCase()}.xlsx</b> (hoja Indicadores) y actualizá los datos.</div>`);
 }
 
 /* ---------- eventos ---------- */
@@ -279,11 +289,13 @@ function mbar(){
    '<button class="mb pre" data-pre="ult">Último mes</button><button class="mb pre" data-pre="ytd">Acumulado del año</button><button class="mb pre" data-pre="anio">Año completo</button>'+
    `<span class="plabel">Mostrando <b>${esc(etqPeriodo())}</b>${S.meses.length>1?" · acumulado: promedio en %, km/l y tiempos; suma en cantidades e importes":""}</span>`}
 function poblar(){
-  $("#sub").textContent=D.generado?"Datos de BASE_FLOTA.xlsx · actualizado "+D.generado:"Cargando datos…";
+  $("#ttl").textContent="Dashboard de "+NOMBRE_AREA[area];document.title="Dashboard de "+NOMBRE_AREA[area];
+  $("#ope").style.display=OPS.length<2?"none":"";
+  $("#sub").textContent=D.generado?"Datos de BASE_"+area.toUpperCase()+".xlsx · actualizado "+D.generado:"Cargando datos…";
   mbar();
   $("#cat").innerHTML='<option value="">Todas las categorías</option>'+D.categorias.map(c=>`<option>${esc(c)}</option>`).join("");
   $("#ope").innerHTML='<option value="">Todos los operadores</option>'+OPS.map(o=>`<option value="${o.cod}">${esc(o.nombre)}</option>`).join("");
-  $("#foot").textContent="Todo sale de BASE_FLOTA.xlsx (hojas Indicadores, Objetivos y Resultados). Objetivo del mes si está cargado; si no, el Target de Objetivos. Semáforo: verde cumple objetivo; ámbar = dentro del disparador del operador (o 10 % de tolerancia); rojo = fuera. Colores aproximados de la paleta AB InBev.";
+  $("#foot").textContent="Todo sale de BASE_"+area.toUpperCase()+".xlsx (hojas Indicadores, Objetivos y Resultados). Objetivo del mes si está cargado; si no, el Target de Objetivos. Semáforo: verde cumple objetivo; ámbar = dentro del disparador del operador (o 10 % de tolerancia); rojo = fuera. Colores aproximados de la paleta AB InBev.";
 }
 function init(){
   poblar();
@@ -328,8 +340,18 @@ function init(){
   render();
 }
 init();
-window.FLOTA={datos:()=>D,cargar(d){D=d;OPS=d.operadores;Object.assign(S,{meses:[d.ultimoMes],cat:"",ope:"",q:"",crit:false,dat:false,est:""});
-  $("#q").value="";$("#crit").checked=false;$("#dat").checked=false;poblar();render()}};
+function resetS(){Object.assign(S,{meses:[D.ultimoMes],cat:"",ope:"",q:"",crit:false,dat:false,est:""});
+  $("#q").value="";$("#crit").checked=false;$("#dat").checked=false}
+function tabs(){const t=$("#tabs");if(!ALL||!ALL.warehouse){t.hidden=true;return}t.hidden=false;
+  t.innerHTML=["flota","warehouse"].map(a=>`<button class="tab ${a===area?"on":""}" data-a="${a}">${NOMBRE_AREA[a]}</button>`).join("")}
+function aplicar(){D=(ALL&&ALL[area])||VACIO;OPS=D.operadores;resetS();tabs();poblar();render()}
+function irA(a){if(!ALL||!ALL[a]||a===area)return;area=a;try{history.replaceState(null,"","#"+a)}catch(e){}aplicar()}
+$("#tabs").onclick=e=>{const b=e.target.closest(".tab");if(b)irA(b.dataset.a)};
+let hashOk=false;
+window.FLOTA={datos:()=>ALL,
+  cargar(d){ALL=NORM(d);if(!hashOk){hashOk=true;if(location.hash==="#warehouse"&&ALL&&ALL.warehouse)area="warehouse"}if(!ALL[area])area="flota";aplicar()},
+  cargarArea(a,data){ALL=ALL||{generado:data.generado,flota:null,warehouse:null};ALL[a]=data;ALL.generado=data.generado;if(a===area)aplicar();else tabs()}};
+if(ALL)window.FLOTA.cargar(ALL);
 // VISOR: lee data.json (mismo directorio) cada vez que se abre; así solo se actualiza ese archivo
 if(!DATA){fetch("data.json?v="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(d=>window.FLOTA.cargar(d))
   .catch(e=>{$("#sub").textContent="No se pudieron cargar los datos (data.json). Abrí el link publicado, no el archivo local. "+e.message;$("#cats").innerHTML='<div class="empty">Sin datos para mostrar.</div>'})}
